@@ -1,21 +1,35 @@
-# REDCap RAG Prototype
+# REDCap RAG
 
-A prototype Retrieval-Augmented Generation (RAG) workflow built as part of an Applied AI research project at Vanderbilt University.
+A prototype Retrieval-Augmented Generation (RAG) workflow built for an Applied AI research project at Vanderbilt University.
 
-## Goals
+## Current Functionality
 
-- Connect to REDCap via its API
-- Retrieve research records
-- Build prompt context from retrieved data
-- Generate grounded answers using an open-source LLM
+* Connects to a REDCap project through the REDCap API
+* Authenticates using an API token stored in a `.env` file
+* Retrieves REDCap records as JSON
+* Filters and cleans retrieved records
+* Passes retrieved records to a local open-source LLM (Llama 3.2 via Ollama)
+* Generates answers using only the retrieved REDCap data
 
-## Technologies
+## Project Structure
 
-- Python
-- REDCap API
-- Requests
-- python-dotenv
+```text
+src/
+├── main.py
+├── redcap_client.py
+├── utils.py
+└── llm_client.py
+```
 
-## Project Status
+## Run
 
-In development
+```bash
+pip install -r requirements.txt
+python3 src/main.py
+```
+
+## Next Steps
+
+* Improve retrieval based on user queries
+* Explore embedding-based retrieval and vector databases
+* Expand into a more complete research assistant for REDCap data
