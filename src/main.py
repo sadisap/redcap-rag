@@ -1,30 +1,33 @@
 from redcap_client import get_records
-from utils import filter_records, remove_empty_fields
+from retrieval import retrieve_records
+from utils import remove_empty_fields
 from llm_client import ask_llm
 
 
 def main():
     records = get_records()
 
-    mot_records = filter_records(
-        records,
+    question = "Summarize the Mock OR and tour activities represented in these records."
+
+    searchable_fields = [
         "mot_title_or_description",
+    ]
+
+    retrieved_records = retrieve_records(
+        records,
+        question,
+        searchable_fields,
     )
 
     clean_records = [
         remove_empty_fields(record)
-        for record in mot_records[:5]
+        for record in retrieved_records[:5]
     ]
 
-    question = "Summarize the Mock OR and tour activities represented in these records."
+    print(f"Retrieved {len(clean_records)} records.\n")
 
-    answer = ask_llm(clean_records, question)
-
-    print("\nQuestion:")
-    print(question)
-
-    print("\nAnswer:")
-    print(answer)
+    for record in clean_records:
+        print(record)
 
 
 if __name__ == "__main__":
