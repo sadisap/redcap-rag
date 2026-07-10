@@ -1,7 +1,11 @@
 from redcap_client import get_records
-from retrieval import retrieve_records
+from retrieval import (
+    build_chroma_index,
+    retrieve_records,
+)
 from utils import remove_empty_fields
 from llm_client import ask_llm
+from chroma_client import reset_collection
 
 
 def main():
@@ -13,21 +17,29 @@ def main():
         "mot_title_or_description",
     ]
 
-    retrieved_records = retrieve_records(
+    reset_collection()
+
+    build_chroma_index(
         records,
-        question,
         searchable_fields,
+    )
+
+    retrieved_records = retrieve_records(
+        question,
     )
 
     clean_records = [
         remove_empty_fields(record)
-        for record in retrieved_records[:5]
+        for record in retrieved_records
     ]
 
-    print(f"Retrieved {len(clean_records)} records.\n")
+    answer = ask_llm(clean_records, question)
 
-    for record in clean_records:
-        print(record)
+    print("\nQuestion:")
+    print(question)
+
+    print("\nAnswer:")
+    print(answer)
 
 
 if __name__ == "__main__":

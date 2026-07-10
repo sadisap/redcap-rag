@@ -1,50 +1,65 @@
-from nltk.stem import PorterStemmer
+from embedding_client import get_embedding, get_embeddings
+from chroma_client import query_records, add_records
 
-stemmer = PorterStemmer()
+def retrieve_records(question):
 
-STOP_WORDS = {
-    "the", "a", "an", "and",
-    "of", "to", "in", "on", "for",
-    "with", "me", "show", "find", "summarize",
-}
+    question_embedding = get_embedding(question)
 
-def retrieve_records(records, question, searchable_fields):
-    keywords = extract_keywords(question)
+    results = query_records(
+        question_embedding.tolist(),
+    )
 
-    scored_records = []
-
-    for record in records:
-
-        score = 0
-
-        for field in searchable_fields:
-
-            field_words = [
-                stemmer.stem(word)
-                for word in record.get(field, "").lower().split()
-            ]
-
-            for keyword in keywords:
-                if keyword in field_words:
-                    score += 1
-
-        if score > 0:
-            scored_records.append((score, record))
-
-    scored_records.sort(reverse=True, key=lambda item: item[0])
-
-    return [record for score, record in scored_records]
+    return results["metadatas"][0]
 
 
-def extract_keywords(question):
+def build_search_text(record, searchable_fields):
     """
-    Return meaningful keywords from the user's question.
+    Combine searchable fields into one string.
     """
-
-    words = question.lower().split()
-
-    return [
-        stemmer.stem(word.strip(".,?!"))
-        for word in words
-        if word.strip(".,?!") not in STOP_WORDS
+    values = [
+        record.get(field, "")
+        for field in searchable_fields
     ]
+
+    return " ".join(values)
+
+def build_chroma_index(records, searchable_fields, batch_size=256):
+    """
+    Embed records in batches and store them in Chroma.
+    """
+
+    total = len(records)
+
+    for start in range(0, total, batch_size):
+
+        end = min(start + batch_size, total)
+
+        batch = records[start:end]
+
+        documents = []
+        ids = []
+        metadatas = []
+
+        for record in batch:
+
+            search_text = build_search_text(
+                record,
+                searchable_fields,
+            )
+
+            documents.append(search_text)
+
+            ids.append(str(record["record_id"]))
+
+            metadatas.append(record)
+
+        embeddings = get_embeddings(documents).tolist()
+
+        add_records(
+            ids,
+            embeddings,
+            documents,
+            metadatas,
+        )
+
+        print(f"Indexed {end}/{total}")
