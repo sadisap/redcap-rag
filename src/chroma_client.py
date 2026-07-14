@@ -11,6 +11,7 @@ collection = client.get_or_create_collection(
 
 
 def add_records(ids, embeddings, documents, metadatas):
+
     collection.add(
         ids=ids,
         embeddings=embeddings,
@@ -19,7 +20,7 @@ def add_records(ids, embeddings, documents, metadatas):
     )
 
 
-def query_records(question_embedding, top_k=5):
+def query_records(question_embedding, top_k=20):
     """
     Return the most semantically similar records.
     """
@@ -27,6 +28,10 @@ def query_records(question_embedding, top_k=5):
     return collection.query(
         query_embeddings=[question_embedding],
         n_results=top_k,
+        include=[
+            "metadatas",
+            "distances",
+        ],
     )
 
 
@@ -37,7 +42,9 @@ def reset_collection():
 
     global collection
 
-    client.delete_collection("redcap_records")
+    client.delete_collection(
+        "redcap_records"
+    )
 
     collection = client.get_or_create_collection(
         name="redcap_records"
